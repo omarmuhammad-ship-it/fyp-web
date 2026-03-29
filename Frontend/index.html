@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>DESCOM.com</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="style.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header class="glass-header">
+
+<div class="logo">DESCOM.com</div>
+
+<nav>
+<button class="active" onclick="location.href='index.html'">Home</button>
+<button onclick="location.href='about.html'">About</button>
+<button onclick="location.href='contact.html'">Contact</button>
+</nav>
+
+<button class="upload-btn" onclick="triggerUpload()">Upload Design</button>
+
+</header>
+
+<input type="file" id="fileInput" hidden>
+
+<section class="hero">
+<div class="hero-content">
+<h1>DESIGN COMMUNITY</h1>
+<p>Upload your designs and let the community redesign them creatively.</p>
+
+<div class="hero-tags">
+<span>#creative</span>
+<span>#redesign</span>
+<span>#design</span>
+<span>#community</span>
+</div>
+</div>
+</section>
+
+<section id="feed"></section>
+
+<!-- REDESIGN MODAL -->
+<div id="redesignModal" class="hidden">
+<div class="modal-content">
+
+<button onclick="closeModal()">Close</button>
+
+<textarea id="captionInput" placeholder="Write caption..." class="caption-box"></textarea>
+
+<div style="display:flex; gap:10px;">
+<input type="file" id="stickerInput" hidden>
+<button onclick="document.getElementById('stickerInput').click()">Add Image</button>
+<button onclick="addText()">Add Text</button>
+<button onclick="enableSketch()">Add Sketch</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<button onclick="submitRedesign()">Submit Redesign</button>
+
+</div>
+</div>
+
+<!-- THREAD MODAL -->
+<div id="threadModal" class="hidden">
+<div class="thread-content">
+
+<button onclick="closeThread()">Close</button>
+
+<div class="comment-box">
+<textarea id="commentInput" placeholder="Write a comment..."></textarea>
+<button onclick="submitComment()">Comment</button>
+</div>
+
+<div id="threadContainer"></div>
+
+</div>
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

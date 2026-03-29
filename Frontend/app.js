@@ -1,0 +1,626 @@
+// FIXED VERSION
+// - resize handles restored
+// - sticker upload multi-use fixed
+// - no other behavior changed
+
+console.log("JS LOADED")
+
+const API_URL = "http://localhost:3000/designs"
+
+const feed = document.getElementById("feed")
+const threadContainer = document.getElementById("threadContainer")
+
+let canvas = document.getElementById("canvas")
+let ctx = canvas.getContext("2d")
+
+let currentParentId = null
+let currentThreadRoot = null
+
+let baseImage = null
+let elements = []
+
+let selected = null
+let dragging = false
+let resizing = false
+let resizeHandle = null
+let sketching = false
+
+let currentPath = null
+
+let offsetX = 0
+let offsetY = 0
+
+const HANDLE = 10
+
+
+/* =======================
+MOUSE POSITION
+======================= */
+
+function getMouse(e){
+const rect = canvas.getBoundingClientRect()
+
+const scaleX = canvas.width / rect.width
+const scaleY = canvas.height / rect.height
+
+return {
+x:(e.clientX - rect.left) * scaleX,
+y:(e.clientY - rect.top) * scaleY
+}
+}
+
+
+/* =======================
+LOAD FEED
+======================= */
+
+async function loadDesigns(){
+
+const res = await fetch(API_URL)
+const designs = await res.json()
+
+feed.innerHTML=""
+
+const originals = designs.filter(d=>!d.parent)
+
+originals.forEach(design=>{
+
+const card=document.createElement("div")
+card.className="design-card"
+
+const img=document.createElement("img")
+img.src=design.image
+
+const caption=document.createElement("div")
+caption.innerText=design.caption || ""
+
+const actions=document.createElement("div")
+actions.className="card-actions"
+
+const redesignBtn=document.createElement("button")
+redesignBtn.innerText="Redesign"
+redesignBtn.onclick=()=>openRedesign(design.image,design._id)
+
+const deleteBtn=document.createElement("button")
+deleteBtn.innerText="Delete"
+deleteBtn.onclick=async()=>{
+await fetch(API_URL+"/"+design._id,{method:"DELETE"})
+loadDesigns()
+}
+
+actions.appendChild(redesignBtn)
+actions.appendChild(deleteBtn)
+
+const showBtn=document.createElement("button")
+showBtn.className="show-comments"
+showBtn.innerText="Show Thread"
+showBtn.onclick=()=>openThread(design._id)
+
+card.appendChild(img)
+card.appendChild(caption)
+card.appendChild(actions)
+card.appendChild(showBtn)
+
+feed.appendChild(card)
+
+})
+}
+
+loadDesigns()
+
+
+
+/* =======================
+THREAD SYSTEM
+======================= */
+
+async function openThread(id){
+
+currentThreadRoot = id
+
+const modal = document.getElementById("threadModal")
+modal.classList.remove("hidden")
+modal.style.display = "flex"
+
+renderThread()
+}
+
+function closeThread(){
+const modal = document.getElementById("threadModal")
+modal.style.display="none"
+modal.classList.add("hidden")
+}
+
+async function renderThread(){
+
+const res = await fetch(API_URL)
+const designs = await res.json()
+
+threadContainer.innerHTML=""
+
+function buildTree(parent, level=0){
+
+const children = designs.filter(d=>d.parent === parent)
+
+children.forEach(item=>{
+
+const div = document.createElement("div")
+div.className="thread-item"
+div.style.marginLeft = level * 20 + "px"
+
+if(item.caption){
+const cap = document.createElement("div")
+cap.className="thread-comment"
+cap.innerText = item.caption
+div.appendChild(cap)
+}
+
+if(item.image){
+const img = document.createElement("img")
+img.src = item.image
+div.appendChild(img)
+}
+
+if(item.comment){
+const comment = document.createElement("div")
+comment.className="thread-comment"
+comment.innerText = item.comment
+div.appendChild(comment)
+}
+
+const actions=document.createElement("div")
+actions.className="thread-actions"
+
+const replyBtn=document.createElement("button")
+replyBtn.innerText="Comment"
+replyBtn.onclick=()=>replyComment(item._id)
+
+const redesignBtn=document.createElement("button")
+redesignBtn.innerText="Redesign"
+redesignBtn.onclick=()=>openRedesign(item.image,item._id)
+
+actions.appendChild(replyBtn)
+actions.appendChild(redesignBtn)
+
+div.appendChild(actions)
+
+threadContainer.appendChild(div)
+
+buildTree(item._id, level+1)
+
+})
+
+}
+
+buildTree(currentThreadRoot)
+
+}
+
+function replyComment(parentId){
+currentThreadRoot = parentId
+document.getElementById("commentInput").focus()
+}
+
+
+
+/* =======================
+COMMENT
+======================= */
+
+async function submitComment(){
+
+const text = document.getElementById("commentInput").value
+if(!text) return
+
+await fetch(API_URL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+image:"",
+creator:"omar",
+parent:currentThreadRoot,
+comment:text
+})
+})
+
+document.getElementById("commentInput").value=""
+renderThread()
+
+}
+
+
+
+/* =======================
+OPEN REDESIGN
+======================= */
+
+function openRedesign(image,id){
+
+currentParentId=id
+
+const modal=document.getElementById("redesignModal")
+modal.classList.remove("hidden")
+modal.style.display="flex"
+
+canvas.width = 900
+canvas.height = 600
+
+elements=[]
+selected=null
+
+baseImage=new Image()
+baseImage.src=image
+baseImage.onload=draw
+}
+
+
+
+/* =======================
+DRAW
+======================= */
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height)
+
+if(baseImage){
+ctx.drawImage(baseImage,0,0,canvas.width,canvas.height)
+}
+
+elements.forEach(el=>{
+
+if(el.type==="image"){
+ctx.drawImage(el.img,el.x,el.y,el.w,el.h)
+}
+
+if(el.type==="text"){
+ctx.font = el.size+"px Arial"
+ctx.fillStyle="black"
+ctx.fillText(el.text,el.x,el.y+el.h)
+}
+
+if(el.type==="path"){
+ctx.beginPath()
+ctx.lineWidth=3
+ctx.lineCap="round"
+ctx.strokeStyle="black"
+
+el.points.forEach((p,i)=>{
+if(i===0) ctx.moveTo(p.x,p.y)
+else ctx.lineTo(p.x,p.y)
+})
+
+ctx.stroke()
+}
+
+})
+
+if(currentPath){
+ctx.beginPath()
+ctx.lineWidth=3
+ctx.lineCap="round"
+ctx.strokeStyle="black"
+
+currentPath.points.forEach((p,i)=>{
+if(i===0) ctx.moveTo(p.x,p.y)
+else ctx.lineTo(p.x,p.y)
+})
+
+ctx.stroke()
+}
+
+if(selected){
+
+ctx.strokeStyle="#1E3A6D"
+ctx.setLineDash([6,4])
+ctx.strokeRect(selected.x,selected.y,selected.w,selected.h)
+ctx.setLineDash([])
+
+drawHandle(selected.x,selected.y)
+drawHandle(selected.x+selected.w,selected.y)
+drawHandle(selected.x,selected.y+selected.h)
+drawHandle(selected.x+selected.w,selected.y+selected.h)
+
+}
+
+}
+
+function drawHandle(x,y){
+ctx.fillStyle="#1E3A6D"
+ctx.fillRect(x-HANDLE/2,y-HANDLE/2,HANDLE,HANDLE)
+}
+
+
+
+/* =======================
+HANDLE DETECTION
+======================= */
+
+function getHandle(x,y,el){
+
+if(near(x,y,el.x,el.y)) return "tl"
+if(near(x,y,el.x+el.w,el.y)) return "tr"
+if(near(x,y,el.x,el.y+el.h)) return "bl"
+if(near(x,y,el.x+el.w,el.y+el.h)) return "br"
+
+return null
+}
+
+function near(x,y,hx,hy){
+return Math.abs(x-hx)<HANDLE && Math.abs(y-hy)<HANDLE
+}
+
+
+
+/* =======================
+TEXT
+======================= */
+
+function addText(){
+
+sketching=false
+
+const text=prompt("Enter text")
+if(!text) return
+
+ctx.font="30px Arial"
+const width = ctx.measureText(text).width
+
+elements.push({
+type:"text",
+text,
+x:100,
+y:100,
+w:width,
+h:30,
+size:30
+})
+
+draw()
+}
+
+
+
+/* =======================
+SKETCH
+======================= */
+
+function enableSketch(){
+sketching=true
+selected=null
+}
+
+
+
+/* =======================
+MOUSE EVENTS
+======================= */
+
+canvas.onmousedown = function(e){
+
+const {x,y} = getMouse(e)
+
+if(sketching){
+currentPath={
+type:"path",
+points:[{x,y}]
+}
+dragging=true
+return
+}
+
+selected=null
+
+for(let i=elements.length-1;i>=0;i--){
+const el=elements[i]
+
+const handle = getHandle(x,y,el)
+if(handle){
+selected=el
+resizing=true
+resizeHandle=handle
+return
+}
+
+if(
+x>el.x &&
+x<el.x+el.w &&
+y>el.y &&
+y<el.y+el.h
+){
+selected=el
+dragging=true
+offsetX=x-el.x
+offsetY=y-el.y
+return
+}
+
+}
+
+draw()
+}
+
+canvas.onmousemove = function(e){
+
+const {x,y} = getMouse(e)
+
+if(sketching && dragging){
+currentPath.points.push({x,y})
+draw()
+return
+}
+
+if(resizing && selected){
+
+if(resizeHandle==="br"){
+selected.w = x - selected.x
+selected.h = y - selected.y
+}
+
+if(resizeHandle==="tr"){
+selected.w = x - selected.x
+selected.h += selected.y - y
+selected.y = y
+}
+
+if(resizeHandle==="bl"){
+selected.w += selected.x - x
+selected.x = x
+selected.h = y - selected.y
+}
+
+if(resizeHandle==="tl"){
+selected.w += selected.x - x
+selected.h += selected.y - y
+selected.x = x
+selected.y = y
+}
+
+draw()
+return
+}
+
+if(dragging && selected){
+selected.x = x-offsetX
+selected.y = y-offsetY
+draw()
+}
+
+}
+
+canvas.onmouseup=function(){
+
+if(sketching && currentPath){
+elements.push(currentPath)
+currentPath=null
+}
+
+dragging=false
+resizing=false
+}
+
+
+
+/* =======================
+ADD IMAGE
+======================= */
+
+document.getElementById("stickerInput").addEventListener("change",e=>{
+
+sketching=false
+
+const file=e.target.files[0]
+if(!file) return
+
+const reader=new FileReader()
+
+reader.onload=function(){
+
+const img=new Image()
+img.src=reader.result
+
+img.onload=()=>{
+
+elements.push({
+type:"image",
+img,
+x:100,
+y:100,
+w:200,
+h:200
+})
+
+draw()
+
+document.getElementById("stickerInput").value = ""
+
+}
+
+}
+
+reader.readAsDataURL(file)
+
+})
+
+
+
+/* =======================
+SUBMIT REDESIGN
+======================= */
+
+async function submitRedesign(){
+
+const caption = document.getElementById("captionInput").value
+const imageData=canvas.toDataURL("image/png")
+
+await fetch(API_URL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+image:imageData,
+creator:"omar",
+parent:currentParentId,
+caption:caption
+})
+})
+
+document.getElementById("captionInput").value=""
+
+closeModal()
+loadDesigns()
+renderThread()
+}
+
+
+
+/* =======================
+MODAL
+======================= */
+
+function closeModal(){
+const modal=document.getElementById("redesignModal")
+modal.style.display="none"
+modal.classList.add("hidden")
+}
+
+
+
+/* =======================
+UPLOAD
+======================= */
+
+async function uploadDesign(){
+
+const fileInput=document.getElementById("fileInput")
+const file=fileInput.files[0]
+
+const caption = prompt("Enter caption")
+
+if(!file) return
+
+const reader=new FileReader()
+
+reader.onload=async function(){
+
+await fetch(API_URL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+image:reader.result,
+creator:"omar",
+parent:null,
+caption:caption
+})
+})
+
+loadDesigns()
+}
+
+reader.readAsDataURL(file)
+}
+
+function triggerUpload(){
+document.getElementById("fileInput").click()
+}
+
+document.getElementById("fileInput").addEventListener("change", uploadDesign)
