@@ -2,15 +2,13 @@ const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
 
-console.log("DESIGN ROUTES LOADED")
-
 // GET ALL
 router.get("/", async (req, res) => {
   try {
-    const designs = await Design.find().lean()
+    const designs = await Design.find().sort({ createdAt: -1 })
     res.json(designs)
   } catch (err) {
-    console.error("GET ERROR:", err)
+    console.error("FETCH ERROR:", err)
     res.status(500).json({ error: "Failed to fetch designs" })
   }
 })
@@ -22,7 +20,7 @@ router.post("/", async (req, res) => {
     await design.save()
     res.json(design)
   } catch (err) {
-    console.error("POST ERROR:", err)
+    console.error("CREATE ERROR:", err)
     res.status(500).json({ error: "Failed to create design" })
   }
 })
