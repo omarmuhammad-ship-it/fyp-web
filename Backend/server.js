@@ -15,28 +15,28 @@ app.use((req, res, next) => {
   next()
 })
 
-const PORT = process.env.PORT || 3000
+// ROUTES
+const designRoutes = require("./routes/designRoutes")
+app.use("/designs", designRoutes)
 
-mongoose.connect(process.env.MONGO_URI)
-.then(() => {
+// FRONTEND
+const frontendPath = path.join(__dirname, "../Frontend")
+app.use(express.static(frontendPath))
 
-  console.log("MongoDB Connected")
-
-  // ROUTES (MOVE INSIDE)
-  const designRoutes = require("./routes/designRoutes")
-  app.use("/designs", designRoutes)
-
-  // FRONTEND
-  const frontendPath = path.join(__dirname, "../Frontend")
-  app.use(express.static(frontendPath))
-
-  app.get("/", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"))
-  })
-
-  app.listen(PORT, () => {
-    console.log("Server running on port " + PORT)
-  })
-
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"))
 })
-.catch(err => console.error(err))
+
+// CONNECT MONGO (safe)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.error("Mongo error:", err))
+
+// START SERVER (always start)
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT)
+})
