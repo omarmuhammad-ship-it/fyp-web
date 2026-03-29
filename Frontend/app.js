@@ -5,7 +5,7 @@
 
 console.log("JS LOADED")
 
-const API_URL = "http://localhost:3000/designs"
+const API_URL = "/designs"
 
 const feed = document.getElementById("feed")
 const threadContainer = document.getElementById("threadContainer")
