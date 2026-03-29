@@ -7,10 +7,10 @@ console.log("DESIGN ROUTES LOADED")
 // GET ALL
 router.get("/", async (req, res) => {
   try {
-    const designs = await Design.find()
+    const designs = await Design.find().lean()
     res.json(designs)
   } catch (err) {
-    console.error(err)
+    console.error("GET ERROR:", err)
     res.status(500).json({ error: "Failed to fetch designs" })
   }
 })
@@ -22,7 +22,7 @@ router.post("/", async (req, res) => {
     await design.save()
     res.json(design)
   } catch (err) {
-    console.error(err)
+    console.error("POST ERROR:", err)
     res.status(500).json({ error: "Failed to create design" })
   }
 })
@@ -33,7 +33,7 @@ router.delete("/:id", async (req, res) => {
     await Design.findByIdAndDelete(req.params.id)
     res.json({ success: true })
   } catch (err) {
-    console.error(err)
+    console.error("DELETE ERROR:", err)
     res.status(500).json({ error: "Delete failed" })
   }
 })
