@@ -27,15 +27,12 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"))
 })
 
-// CONNECT MONGO (safe)
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+// CONNECT MONGO
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.error("Mongo error:", err))
 
-// START SERVER (always start)
+// START SERVER
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT)
