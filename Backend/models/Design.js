@@ -1,11 +1,26 @@
 const mongoose = require("mongoose")
 
 const DesignSchema = new mongoose.Schema({
-  image: String,
-  caption: String,
-  creator: String,
-  parent: String,
-  comment: String
+  image: {
+    type: String,
+    required: false
+  },
+  caption: {
+    type: String,
+    required: false
+  },
+  creator: {
+    type: String,
+    required: false
+  },
+  parent: {
+    type: String,
+    default: null
+  },
+  comment: {
+    type: String,
+    default: null
+  }
 }, { timestamps: true })
 
 module.exports = mongoose.model("Design", DesignSchema)
