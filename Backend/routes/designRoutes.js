@@ -1,25 +1,34 @@
 const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
+
 console.log("DESIGN ROUTES LOADED")
 
 // GET ALL
 router.get("/", async (req, res) => {
-  const designs = await Design.find()
-  res.json(designs)
+  try {
+    const designs = await Design.find().sort({ _id: -1 })
+    res.json(designs)
+  } catch (err) {
+    console.error("GET ERROR:", err)
+    res.status(500).json({ error: "Failed to fetch designs" })
+  }
 })
 
 // CREATE
 router.post("/", async (req, res) => {
-  const design = new Design(req.body)
-  await design.save()
-  res.json(design)
+  try {
+    const design = new Design(req.body)
+    await design.save()
+    res.json(design)
+  } catch (err) {
+    console.error("POST ERROR:", err)
+    res.status(500).json({ error: "Failed to create design" })
+  }
 })
 
-// DELETE ✅
+// DELETE
 router.delete("/:id", async (req, res) => {
-  console.log("DELETE ROUTE HIT:", req.params.id)
-
   try {
     const deleted = await Design.findByIdAndDelete(req.params.id)
 
@@ -29,7 +38,7 @@ router.delete("/:id", async (req, res) => {
 
     res.json({ message: "Deleted OK" })
   } catch (err) {
-    console.error(err)
+    console.error("DELETE ERROR:", err)
     res.status(500).json({ error: "Delete failed" })
   }
 })
