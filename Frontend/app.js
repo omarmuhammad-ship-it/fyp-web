@@ -5,7 +5,7 @@ console.log("JS LOADED")
 const API_URL =
 location.hostname === "localhost"
 ? "http://localhost:3000/designs"
-: "https://fyp-web-fumi.onrender.com"
+: "https://fyp-web-fumi.onrender.com/designs"
 
 const feed = document.getElementById("feed")
 const threadContainer = document.getElementById("threadContainer")
