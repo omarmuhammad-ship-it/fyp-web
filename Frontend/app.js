@@ -1,11 +1,11 @@
-// FIXED VERSION
-// - resize handles restored
-// - sticker upload multi-use fixed
-// - no other behavior changed
+
 
 console.log("JS LOADED")
 
-const API_URL = "/designs"
+const API_URL =
+location.hostname === "localhost"
+? "http://localhost:3000/designs"
+: "https://fyp-web-fumi.onrender.com"
 
 const feed = document.getElementById("feed")
 const threadContainer = document.getElementById("threadContainer")
