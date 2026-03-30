@@ -258,6 +258,10 @@ border:1px solid #eee;
 display:none !important;
 }
 
+canvas{
+touch-action: none;
+}
+
 /* THREAD */
 
 .thread-item{

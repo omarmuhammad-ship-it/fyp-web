@@ -499,6 +499,124 @@ dragging=false
 resizing=false
 }
 
+/* =======================
+TOUCH EVENTS (iPad / Apple Pencil)
+======================= */
+
+canvas.addEventListener("touchstart", function(e){
+e.preventDefault()
+
+const touch = e.touches[0]
+const rect = canvas.getBoundingClientRect()
+
+const x = (touch.clientX - rect.left) * (canvas.width / rect.width)
+const y = (touch.clientY - rect.top) * (canvas.height / rect.height)
+
+if(sketching){
+currentPath={
+type:"path",
+points:[{x,y}]
+}
+dragging=true
+return
+}
+
+selected=null
+
+for(let i=elements.length-1;i>=0;i--){
+const el=elements[i]
+
+const handle = getHandle(x,y,el)
+if(handle){
+selected=el
+resizing=true
+resizeHandle=handle
+return
+}
+
+if(
+x>el.x &&
+x<el.x+el.w &&
+y>el.y &&
+y<el.y+el.h
+){
+selected=el
+dragging=true
+offsetX=x-el.x
+offsetY=y-el.y
+return
+}
+}
+
+draw()
+})
+
+
+canvas.addEventListener("touchmove", function(e){
+e.preventDefault()
+
+const touch = e.touches[0]
+const rect = canvas.getBoundingClientRect()
+
+const x = (touch.clientX - rect.left) * (canvas.width / rect.width)
+const y = (touch.clientY - rect.top) * (canvas.height / rect.height)
+
+if(sketching && dragging){
+currentPath.points.push({x,y})
+draw()
+return
+}
+
+if(resizing && selected){
+
+if(resizeHandle==="br"){
+selected.w = x - selected.x
+selected.h = y - selected.y
+}
+
+if(resizeHandle==="tr"){
+selected.w = x - selected.x
+selected.h += selected.y - y
+selected.y = y
+}
+
+if(resizeHandle==="bl"){
+selected.w += selected.x - x
+selected.x = x
+selected.h = y - selected.y
+}
+
+if(resizeHandle==="tl"){
+selected.w += selected.x - x
+selected.h += selected.y - y
+selected.x = x
+selected.y = y
+}
+
+draw()
+return
+}
+
+if(dragging && selected){
+selected.x = x-offsetX
+selected.y = y-offsetY
+draw()
+}
+
+})
+
+
+canvas.addEventListener("touchend", function(){
+
+if(sketching && currentPath){
+elements.push(currentPath)
+currentPath=null
+}
+
+dragging=false
+resizing=false
+
+})
 
 
 /* =======================
