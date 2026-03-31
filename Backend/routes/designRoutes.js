@@ -2,7 +2,9 @@ const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
 
-// GET ONLY ORIGINAL POSTS (FASTER)
+// ==============================
+// GET FEED (ONLY ORIGINAL POSTS)
+// ==============================
 router.get("/", async (req, res) => {
   try {
 
@@ -18,7 +20,28 @@ router.get("/", async (req, res) => {
   }
 })
 
+
+// ==============================
+// GET THREAD (ALL POSTS)
+// ==============================
+router.get("/thread", async (req, res) => {
+  try {
+
+    const designs = await Design.find({})
+      .lean()
+
+    res.json(designs)
+
+  } catch (err) {
+    console.error("THREAD ERROR:", err)
+    res.status(500).json({ error: "Failed to fetch thread" })
+  }
+})
+
+
+// ==============================
 // CREATE
+// ==============================
 router.post("/", async (req, res) => {
   try {
     const design = new Design(req.body)
@@ -30,7 +53,10 @@ router.post("/", async (req, res) => {
   }
 })
 
+
+// ==============================
 // DELETE
+// ==============================
 router.delete("/:id", async (req, res) => {
   try {
     await Design.findByIdAndDelete(req.params.id)

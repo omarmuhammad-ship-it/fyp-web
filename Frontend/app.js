@@ -53,7 +53,7 @@ LOAD FEED
 async function loadDesigns(){
 try{
 
-const res = await fetch(API_URL)
+const res = await fetch(API_URL + "/thread")
 if(!res.ok) return
 
 const designs = await res.json()
