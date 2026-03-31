@@ -13,6 +13,7 @@ let ctx = canvas.getContext("2d")
 
 let currentParentId = null
 let currentThreadRoot = null
+let replyParentId = null
 
 let baseImage = null
 let elements = []
@@ -199,7 +200,7 @@ buildTree(currentThreadRoot)
 }
 
 function replyComment(parentId){
-currentThreadRoot = parentId
+replyParentId = parentId
 document.getElementById("commentInput").focus()
 }
 
@@ -218,8 +219,7 @@ headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 image:"",
 creator:"omar",
-parent:currentThreadRoot,
-comment:text
+parent: replyParentId || currentThreadRoot,comment:text
 })
 })
 
