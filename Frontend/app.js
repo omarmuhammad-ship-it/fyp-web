@@ -243,8 +243,8 @@ const modal=document.getElementById("redesignModal")
 modal.classList.remove("hidden")
 modal.style.display="flex"
 
-canvas.width = 900
-canvas.height = 600
+canvas.width = 700
+canvas.height = 450
 
 elements=[]
 selected=null
@@ -422,7 +422,7 @@ SUBMIT REDESIGN
 async function submitRedesign(){
 
 const caption = document.getElementById("captionInput").value
-const imageData=canvas.toDataURL("image/png")
+const imageData = canvas.toDataURL("image/jpeg", 0.6)
 
 await fetch(API_URL,{
 method:"POST",
