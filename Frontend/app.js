@@ -1,5 +1,3 @@
-
-
 console.log("JS LOADED")
 
 const API_URL =
@@ -26,12 +24,10 @@ let resizeHandle = null
 let sketching = false
 
 let currentPath = null
-
 let offsetX = 0
 let offsetY = 0
 
 const HANDLE = 10
-
 
 /* =======================
 MOUSE POSITION
@@ -49,14 +45,16 @@ y:(e.clientY - rect.top) * scaleY
 }
 }
 
-
 /* =======================
 LOAD FEED
 ======================= */
 
 async function loadDesigns(){
+try{
 
 const res = await fetch(API_URL)
+if(!res.ok) return
+
 const designs = await res.json()
 
 feed.innerHTML=""
@@ -104,11 +102,13 @@ card.appendChild(showBtn)
 feed.appendChild(card)
 
 })
+
+}catch(err){
+console.log(err)
+}
 }
 
 loadDesigns()
-
-
 
 /* =======================
 THREAD SYSTEM
@@ -134,6 +134,8 @@ modal.classList.add("hidden")
 async function renderThread(){
 
 const res = await fetch(API_URL)
+if(!res.ok) return
+
 const designs = await res.json()
 
 threadContainer.innerHTML=""
@@ -201,8 +203,6 @@ currentThreadRoot = parentId
 document.getElementById("commentInput").focus()
 }
 
-
-
 /* =======================
 COMMENT
 ======================= */
@@ -224,11 +224,12 @@ comment:text
 })
 
 document.getElementById("commentInput").value=""
+
+setTimeout(()=>{
 renderThread()
+},200)
 
 }
-
-
 
 /* =======================
 OPEN REDESIGN
@@ -252,8 +253,6 @@ baseImage=new Image()
 baseImage.src=image
 baseImage.onload=draw
 }
-
-
 
 /* =======================
 DRAW
@@ -309,77 +308,7 @@ else ctx.lineTo(p.x,p.y)
 ctx.stroke()
 }
 
-if(selected){
-
-ctx.strokeStyle="#1E3A6D"
-ctx.setLineDash([6,4])
-ctx.strokeRect(selected.x,selected.y,selected.w,selected.h)
-ctx.setLineDash([])
-
-drawHandle(selected.x,selected.y)
-drawHandle(selected.x+selected.w,selected.y)
-drawHandle(selected.x,selected.y+selected.h)
-drawHandle(selected.x+selected.w,selected.y+selected.h)
-
 }
-
-}
-
-function drawHandle(x,y){
-ctx.fillStyle="#1E3A6D"
-ctx.fillRect(x-HANDLE/2,y-HANDLE/2,HANDLE,HANDLE)
-}
-
-
-
-/* =======================
-HANDLE DETECTION
-======================= */
-
-function getHandle(x,y,el){
-
-if(near(x,y,el.x,el.y)) return "tl"
-if(near(x,y,el.x+el.w,el.y)) return "tr"
-if(near(x,y,el.x,el.y+el.h)) return "bl"
-if(near(x,y,el.x+el.w,el.y+el.h)) return "br"
-
-return null
-}
-
-function near(x,y,hx,hy){
-return Math.abs(x-hx)<HANDLE && Math.abs(y-hy)<HANDLE
-}
-
-
-
-/* =======================
-TEXT
-======================= */
-
-function addText(){
-
-sketching=false
-
-const text=prompt("Enter text")
-if(!text) return
-
-ctx.font="30px Arial"
-const width = ctx.measureText(text).width
-
-elements.push({
-type:"text",
-text,
-x:100,
-y:100,
-w:width,
-h:30,
-size:30
-})
-
-draw()
-}
-
-
 
 /* =======================
 SKETCH
@@ -390,8 +319,6 @@ sketching=true
 selected=null
 }
 
-
-
 /* =======================
 MOUSE EVENTS
 ======================= */
@@ -401,43 +328,11 @@ canvas.onmousedown = function(e){
 const {x,y} = getMouse(e)
 
 if(sketching){
-currentPath={
-type:"path",
-points:[{x,y}]
-}
+currentPath={ type:"path", points:[{x,y}] }
 dragging=true
 return
 }
 
-selected=null
-
-for(let i=elements.length-1;i>=0;i--){
-const el=elements[i]
-
-const handle = getHandle(x,y,el)
-if(handle){
-selected=el
-resizing=true
-resizeHandle=handle
-return
-}
-
-if(
-x>el.x &&
-x<el.x+el.w &&
-y>el.y &&
-y<el.y+el.h
-){
-selected=el
-dragging=true
-offsetX=x-el.x
-offsetY=y-el.y
-return
-}
-
-}
-
-draw()
 }
 
 canvas.onmousemove = function(e){
@@ -446,43 +341,6 @@ const {x,y} = getMouse(e)
 
 if(sketching && dragging){
 currentPath.points.push({x,y})
-draw()
-return
-}
-
-if(resizing && selected){
-
-if(resizeHandle==="br"){
-selected.w = x - selected.x
-selected.h = y - selected.y
-}
-
-if(resizeHandle==="tr"){
-selected.w = x - selected.x
-selected.h += selected.y - y
-selected.y = y
-}
-
-if(resizeHandle==="bl"){
-selected.w += selected.x - x
-selected.x = x
-selected.h = y - selected.y
-}
-
-if(resizeHandle==="tl"){
-selected.w += selected.x - x
-selected.h += selected.y - y
-selected.x = x
-selected.y = y
-}
-
-draw()
-return
-}
-
-if(dragging && selected){
-selected.x = x-offsetX
-selected.y = y-offsetY
 draw()
 }
 
@@ -496,128 +354,26 @@ currentPath=null
 }
 
 dragging=false
-resizing=false
+
 }
 
 /* =======================
-TOUCH EVENTS (iPad / Apple Pencil)
+TOUCH EVENTS (iPad)
 ======================= */
 
-canvas.addEventListener("touchstart", function(e){
+canvas.addEventListener("touchstart", e=>{
 e.preventDefault()
-
-const touch = e.touches[0]
-const rect = canvas.getBoundingClientRect()
-
-const x = (touch.clientX - rect.left) * (canvas.width / rect.width)
-const y = (touch.clientY - rect.top) * (canvas.height / rect.height)
-
-if(sketching){
-currentPath={
-type:"path",
-points:[{x,y}]
-}
-dragging=true
-return
-}
-
-selected=null
-
-for(let i=elements.length-1;i>=0;i--){
-const el=elements[i]
-
-const handle = getHandle(x,y,el)
-if(handle){
-selected=el
-resizing=true
-resizeHandle=handle
-return
-}
-
-if(
-x>el.x &&
-x<el.x+el.w &&
-y>el.y &&
-y<el.y+el.h
-){
-selected=el
-dragging=true
-offsetX=x-el.x
-offsetY=y-el.y
-return
-}
-}
-
-draw()
+canvas.onmousedown(e.touches[0])
 })
 
-
-canvas.addEventListener("touchmove", function(e){
+canvas.addEventListener("touchmove", e=>{
 e.preventDefault()
-
-const touch = e.touches[0]
-const rect = canvas.getBoundingClientRect()
-
-const x = (touch.clientX - rect.left) * (canvas.width / rect.width)
-const y = (touch.clientY - rect.top) * (canvas.height / rect.height)
-
-if(sketching && dragging){
-currentPath.points.push({x,y})
-draw()
-return
-}
-
-if(resizing && selected){
-
-if(resizeHandle==="br"){
-selected.w = x - selected.x
-selected.h = y - selected.y
-}
-
-if(resizeHandle==="tr"){
-selected.w = x - selected.x
-selected.h += selected.y - y
-selected.y = y
-}
-
-if(resizeHandle==="bl"){
-selected.w += selected.x - x
-selected.x = x
-selected.h = y - selected.y
-}
-
-if(resizeHandle==="tl"){
-selected.w += selected.x - x
-selected.h += selected.y - y
-selected.x = x
-selected.y = y
-}
-
-draw()
-return
-}
-
-if(dragging && selected){
-selected.x = x-offsetX
-selected.y = y-offsetY
-draw()
-}
-
+canvas.onmousemove(e.touches[0])
 })
 
-
-canvas.addEventListener("touchend", function(){
-
-if(sketching && currentPath){
-elements.push(currentPath)
-currentPath=null
-}
-
-dragging=false
-resizing=false
-
+canvas.addEventListener("touchend", e=>{
+canvas.onmouseup(e)
 })
-
 
 /* =======================
 ADD IMAGE
@@ -649,7 +405,6 @@ h:200
 })
 
 draw()
-
 document.getElementById("stickerInput").value = ""
 
 }
@@ -659,8 +414,6 @@ document.getElementById("stickerInput").value = ""
 reader.readAsDataURL(file)
 
 })
-
-
 
 /* =======================
 SUBMIT REDESIGN
@@ -685,11 +438,13 @@ caption:caption
 document.getElementById("captionInput").value=""
 
 closeModal()
+
+setTimeout(()=>{
 loadDesigns()
 renderThread()
+},300)
+
 }
-
-
 
 /* =======================
 MODAL
@@ -701,8 +456,6 @@ modal.style.display="none"
 modal.classList.add("hidden")
 }
 
-
-
 /* =======================
 UPLOAD
 ======================= */
@@ -713,7 +466,6 @@ const fileInput=document.getElementById("fileInput")
 const file=fileInput.files[0]
 
 const caption = prompt("Enter caption")
-
 if(!file) return
 
 const reader=new FileReader()
@@ -735,6 +487,7 @@ loadDesigns()
 }
 
 reader.readAsDataURL(file)
+
 }
 
 function triggerUpload(){
