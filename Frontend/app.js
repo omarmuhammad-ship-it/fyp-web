@@ -68,6 +68,7 @@ const card=document.createElement("div")
 card.className="design-card"
 
 const img=document.createElement("img")
+img.loading = "lazy"
 img.src=design.image
 
 const caption=document.createElement("div")
@@ -422,7 +423,7 @@ SUBMIT REDESIGN
 async function submitRedesign(){
 
 const caption = document.getElementById("captionInput").value
-const imageData = canvas.toDataURL("image/jpeg", 0.6)
+const imageData = canvas.toDataURL("image/jpeg", 0.4)
 
 await fetch(API_URL,{
 method:"POST",

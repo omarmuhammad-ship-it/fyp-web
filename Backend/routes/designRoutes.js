@@ -2,13 +2,12 @@ const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
 
-// GET ALL
+// GET ONLY ORIGINAL POSTS (FASTER)
 router.get("/", async (req, res) => {
   try {
 
-    // return only needed fields
-    const designs = await Design.find({})
-      .limit(50)
+    const designs = await Design.find({ parent: null })
+      .limit(20)
       .lean()
 
     res.json(designs)
