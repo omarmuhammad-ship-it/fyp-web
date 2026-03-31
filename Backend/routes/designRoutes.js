@@ -6,10 +6,9 @@ const Design = require("../models/Design")
 router.get("/", async (req, res) => {
   try {
 
-    // REMOVE SORT (prevents Mongo memory crash)
+    // return only needed fields
     const designs = await Design.find({})
-      .select("image parent caption comment createdAt")
-      .limit(100)
+      .limit(50)
       .lean()
 
     res.json(designs)
