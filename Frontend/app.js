@@ -116,15 +116,19 @@ loadDesigns()
 THREAD SYSTEM
 ======================= */
 
-async function openThread(id){
+function openThread(id){
 
 currentThreadRoot = id
 
 const modal = document.getElementById("threadModal")
+
 modal.classList.remove("hidden")
 modal.style.display = "flex"
 
+threadContainer.innerHTML = "Loading..."
+
 renderThread()
+
 }
 
 function closeThread(){
@@ -135,7 +139,7 @@ modal.classList.add("hidden")
 
 async function renderThread(){
 
-const res = await fetch(API_URL)
+const res = await fetch(API_URL + "/thread")
 if(!res.ok) return
 
 const designs = await res.json()
@@ -162,6 +166,7 @@ div.appendChild(cap)
 if(item.image){
 const img = document.createElement("img")
 img.src = item.image
+img.loading="lazy"
 div.appendChild(img)
 }
 
