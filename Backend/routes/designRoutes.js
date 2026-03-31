@@ -6,9 +6,9 @@ const Design = require("../models/Design")
 router.get("/", async (req, res) => {
   try {
 
+    // REMOVE SORT (prevents Mongo memory crash)
     const designs = await Design.find({})
       .select("image parent caption comment createdAt")
-      .sort({ createdAt: -1 })
       .limit(100)
       .lean()
 
