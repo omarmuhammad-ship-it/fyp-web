@@ -5,8 +5,15 @@ const Design = require("../models/Design")
 // GET ALL
 router.get("/", async (req, res) => {
   try {
-    const designs = await Design.find().sort({ createdAt: -1 })
+
+    const designs = await Design.find({})
+      .select("image parent caption comment createdAt")
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean()
+
     res.json(designs)
+
   } catch (err) {
     console.error("FETCH ERROR:", err)
     res.status(500).json({ error: "Failed to fetch designs" })
