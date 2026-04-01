@@ -22,7 +22,7 @@ router.get("/", async (req, res) => {
 
 
 // ==============================
-// THREAD (ONLY ONE TREE)
+// THREAD (FULL TREE)
 // ==============================
 router.get("/thread/:id", async (req, res) => {
   try {
@@ -36,7 +36,14 @@ router.get("/thread/:id", async (req, res) => {
       ]
     }).lean()
 
-    res.json(designs)
+    // also include children of children
+    const childrenIds = designs.map(d => d._id)
+
+    const nested = await Design.find({
+      parent: { $in: childrenIds }
+    }).lean()
+
+    res.json([...designs, ...nested])
 
   } catch (err) {
     console.error("THREAD ERROR:", err)
