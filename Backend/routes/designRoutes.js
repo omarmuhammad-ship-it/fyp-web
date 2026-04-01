@@ -2,14 +2,13 @@ const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
 
-// ==============================
-// FEED (ONLY ORIGINAL POSTS)
-// ==============================
+// GET ALL (FAST + THREAD SAFE)
 router.get("/", async (req, res) => {
   try {
 
-    const designs = await Design.find({ parent: null })
-      .limit(20)
+    const designs = await Design.find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
       .lean()
 
     res.json(designs)
@@ -20,41 +19,7 @@ router.get("/", async (req, res) => {
   }
 })
 
-
-// ==============================
-// THREAD (FULL TREE)
-// ==============================
-router.get("/thread/:id", async (req, res) => {
-  try {
-
-    const root = req.params.id
-
-    const designs = await Design.find({
-      $or: [
-        { _id: root },
-        { parent: root }
-      ]
-    }).lean()
-
-    // also include children of children
-    const childrenIds = designs.map(d => d._id)
-
-    const nested = await Design.find({
-      parent: { $in: childrenIds }
-    }).lean()
-
-    res.json([...designs, ...nested])
-
-  } catch (err) {
-    console.error("THREAD ERROR:", err)
-    res.status(500).json({ error: "Failed to fetch thread" })
-  }
-})
-
-
-// ==============================
 // CREATE
-// ==============================
 router.post("/", async (req, res) => {
   try {
     const design = new Design(req.body)
@@ -66,10 +31,7 @@ router.post("/", async (req, res) => {
   }
 })
 
-
-// ==============================
 // DELETE
-// ==============================
 router.delete("/:id", async (req, res) => {
   try {
     await Design.findByIdAndDelete(req.params.id)
