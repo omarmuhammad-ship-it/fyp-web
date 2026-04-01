@@ -3,7 +3,7 @@ const router = express.Router()
 const Design = require("../models/Design")
 
 // ==============================
-// GET FEED (ONLY ORIGINAL POSTS)
+// FEED (ONLY ORIGINAL POSTS)
 // ==============================
 router.get("/", async (req, res) => {
   try {
@@ -22,13 +22,19 @@ router.get("/", async (req, res) => {
 
 
 // ==============================
-// GET THREAD (ALL POSTS)
+// THREAD (ONLY ONE TREE)
 // ==============================
-router.get("/thread", async (req, res) => {
+router.get("/thread/:id", async (req, res) => {
   try {
 
-    const designs = await Design.find({})
-      .lean()
+    const root = req.params.id
+
+    const designs = await Design.find({
+      $or: [
+        { _id: root },
+        { parent: root }
+      ]
+    }).lean()
 
     res.json(designs)
 

@@ -53,7 +53,7 @@ LOAD FEED
 async function loadDesigns(){
 try{
 
-const res = await fetch(API_URL + "/thread")
+const res = await fetch(API_URL + "/thread/" + currentThreadRoot)
 if(!res.ok) return
 
 const designs = await res.json()
@@ -139,7 +139,7 @@ modal.classList.add("hidden")
 
 async function renderThread(){
 
-const res = await fetch(API_URL + "/thread")
+const res = await fetch(API_URL + "/thread/" + currentThreadRoot)
 if(!res.ok) return
 
 const designs = await res.json()
