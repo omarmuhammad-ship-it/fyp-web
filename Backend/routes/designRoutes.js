@@ -2,11 +2,12 @@ const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
 
-// GET ALL (LIMITED BUT THREAD SAFE)
+// GET ALL (LIGHTWEIGHT)
 router.get("/", async (req, res) => {
   try {
 
     const designs = await Design.find({})
+      .select("image parent caption comment createdAt")
       .sort({ createdAt: -1 })
       .limit(20)
       .lean()
