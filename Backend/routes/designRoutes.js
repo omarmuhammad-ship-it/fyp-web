@@ -2,13 +2,13 @@ const express = require("express")
 const router = express.Router()
 const Design = require("../models/Design")
 
-// GET ALL (FAST + THREAD SAFE)
+// GET ALL (LIMITED + FAST)
 router.get("/", async (req, res) => {
   try {
 
     const designs = await Design.find({})
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(30) // important for memory
       .lean()
 
     res.json(designs)
